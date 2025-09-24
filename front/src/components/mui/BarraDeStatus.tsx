@@ -1,9 +1,8 @@
-import React from "react";
 import { Alert, Chip, LinearProgress, Stack } from "@mui/material";
 
 type Props = { loadingCount: number; apiStatus: string | null };
 
-export default function StatusBar({ loadingCount, apiStatus }: Props) {
+export default function BarraDeStatus({ loadingCount, apiStatus }: Props) {
   const show = loadingCount > 0 || !!apiStatus;
   if (!show) return null;
   return (

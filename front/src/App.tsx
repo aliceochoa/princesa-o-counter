@@ -13,7 +13,6 @@ import {
   LinearProgress,
   Button,
   Paper,
-  Skeleton,
 } from "@mui/material";
 import PalavraSwitch from "./components/mui/PalavraSwitch";
 import OcorrenciasCheckbox from "./components/mui/OcorrenciasCheckbox";
@@ -22,7 +21,8 @@ import CapitulosSlider from "./components/mui/CapitulosSlider";
 import TabelaPalavras from "./components/recharts/TabelaPalavras";
 import TotaisBox from "./components/mui/TotaisBox";
 import TituloPrincipal from "./components/mui/TituloPrincipal";
-import StatusBar from "./components/mui/StatusBar";
+import BarraDeStatus from "./components/mui/BarraDeStatus";
+import GraficoSkeleton from "./components/mui/GraficoSkeleton";
 import "./wakeApi";
 import "./axiosRetry";
 import { useApiStatus } from "./hooks/useApiStatus";
@@ -94,7 +94,7 @@ const App: React.FC = () => {
   const [apiReady, setApiReady] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { loadingCount, apiStatus } = useApiStatus();
+  const { loadingCount, apiStatus, hasSettledOnce } = useApiStatus();
 
   const carregarDados = async () => {
     try {
@@ -179,6 +179,9 @@ const App: React.FC = () => {
   const TABLE_MIN_HEIGHT = 420; // ajuste se quiser
   const isLoadingData = warming || loadingCount > 0 || !apiReady;
   const hasData = Array.isArray(dadosFiltrados) && dadosFiltrados.length > 0;
+  const showSkeleton = isLoadingData || !hasSettledOnce;
+  const showTable = !showSkeleton && !apiError && hasData;
+  const showEmpty = !showSkeleton && !apiError && !hasData;
 
   useEffect(() => {
     (async () => {
@@ -277,24 +280,29 @@ const App: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Status Bar e Alerts (barra compacta; troque o texto se quiser) */}
-        <StatusBar
-          loadingCount={loadingCount}
-          apiStatus={apiStatus}
-        />
+        {/* Barra de Status e Alertas */}
+        <BarraDeStatus loadingCount={loadingCount} apiStatus={apiStatus} />
 
         {/* Área da Tabela/Gráfico (mantém altura enquanto carrega) */}
         <>
-          {isLoadingData ? (
-            // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
-              <>
-              // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
+          {showSkeleton ? (
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, minHeight: TABLE_MIN_HEIGHT }}
+            >
               <Alert severity="info" icon={false} sx={{ mb: 1 }}>
                 {warmingStatus ||
                   "Carregando os dados… Pode levar alguns segundos enquanto a API inicia."}
-              </Alert><LinearProgress /></>
+              </Alert>
+              <LinearProgress />
+              <GraficoSkeleton
+                height={TABLE_MIN_HEIGHT - 96}
+                barWidth={28}
+                gap={16}
+                bars={[20, 48, 72, 56, 88, 34, 60]}
+              />
+            </Paper>
           ) : apiError ? (
-            // ERRO
             <Alert
               severity="warning"
               action={
@@ -310,13 +318,16 @@ const App: React.FC = () => {
             >
               {apiError}
             </Alert>
-          ) : hasData ? (
-            // TABELA — só aparece quando terminou de carregar e sem erro
+          ) : showTable ? (
             <TabelaPalavras
               dados={dadosFiltrados}
               mostrarPrincesa={mostrarPrincesa}
               mostrarPrinceso={mostrarPrinceso}
             />
+          ) : showEmpty ? (
+            <Alert severity="info" icon={false}>
+              Nenhuma ocorrência para os filtros atuais.
+            </Alert>
           ) : null}
         </>
         {/* Totais */}
