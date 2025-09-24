@@ -55,7 +55,7 @@ async function wakeApiWithRetry(setStatus: (s: string) => void, maxSeconds = 70)
   // Progressive backoff ~ 0s,1s,2s,4s,8s,12s,16s,20s,  capped
   const steps = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
   let elapsed = 0;
-  for (let i = 0; i < steps.length;eps.length && elapsed <= maxSeconds * 1000; i++) {
+  for (let i = 0; i < steps.length && elapsed <= maxSeconds * 1000; i++) {
     const wait = steps[i];
     if (wait) {
       setStatus(`Acordando a API (tentativa ${i}/${steps.length - 1})`);
@@ -81,6 +81,12 @@ const App: React.FC = () => {
     princesa: 0,
     princeso: 0,
   });
+  const [warming, setWarming] = useState(false);
+  const [warmingStatus, setWarmingStatus] = useState<string | null>(null);
+  const [apiReady, setApiReady] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  
+  const { loadingCount, apiStatus } = useApiStatus();
 
   const carregarDados = async () => {
     try {
@@ -96,35 +102,34 @@ const App: React.FC = () => {
         setApiReady(true);
       }
 
-    const params: any = {
-      min: intervalo[0],
-      max: intervalo[1],
-      ordenar: ordenar,
-      ocultar: ocultarZeros,
-      palavras: [],
+      const params: any = {
+        min: intervalo[0],
+        max: intervalo[1],
+        ordenar: ordenar,
+        ocultar: ocultarZeros,
+        palavras: [],
+      };
+  
+      if (mostrarPrincesa) params.palavras.push("princesa");
+      if (mostrarPrinceso) params.palavras.push("princeso");
+  
+      const response = await axios.get(API_URL, { params });
+      setDados(response.data);
+  
+      // Calcular totais
+      const total: { princesa: number; princeso: number } = {
+        princesa: 0,
+        princeso: 0,
+      };
+      response.data.forEach((item: CapituloData) => {
+        if (mostrarPrincesa && item.princesa) total.princesa += item.princesa;
+        if (mostrarPrinceso && item.princeso) total.princeso += item.princeso;
+      });
+      setTotais(total);
     } catch (err) {
       setApiError("Erro ao buscar dados da API. Tente novamente.");
     }
   };
-    if (mostrarPrincesa) params.palavras.push("princesa");
-    if (mostrarPrinceso) params.palavras.push("princeso");
-
-    const response = await axios.get(API_URL, { params });
-    setDados(response.data);
-
-    // Calcular totais
-    const total: { princesa: number; princeso: number } = {
-      princesa: 0,
-      princeso: 0,
-    };
-    response.data.forEach((item: CapituloData) => {
-      if (mostrarPrincesa && item.princesa) total.princesa += item.princesa;
-      if (mostrarPrinceso && item.princeso) total.princeso += item.princeso;
-    });
-    setTotais(total);
-  };
-
-  const { loadingCount, apiStatus } = useApiStatus();
 
   const dadosFiltrados = dados
     .filter((item) => {
@@ -149,23 +154,17 @@ const App: React.FC = () => {
     .map((item) => {
       const princesa = item.princesa ?? 0;
       const princeso = item.princeso ?? 0;
-      const maior = princesa >= princeso ? princesa : princeso;
-      const menor = princesa < princeso ? princesa : princeso;
-
       return {
-        item,
-        data: item.data,
+        capitulo: item.capitulo,
         princesa,
         princeso,
-        maior,
-        menor,
-        soma:
-          (mostrarPrincesa ? princesa : 0) + (mostrarPrinceso ? princeso : 0),
+        data: item.data,
+        soma: princesa + princeso,
       };
     })
     .sort((a, b) => {
-      if (ordenar=== "crescente") return a.soma - b.soma;
-      if (ordenar=== "decrescente") return b.soma - a.soma;
+      if (ordenar === "crescente") return a.soma - b.soma;
+      if (ordenar === "decrescente") return b.soma - a.soma;
       return a.capitulo - b.capitulo;
     });
 
@@ -187,7 +186,7 @@ useEffect(() => {
     <Container>
 {warming && (
   <Box sx={{ px: 4, pt: 2 }}>
-    <Alert severity=verity="info" icon={false}>
+    <Alert severity="info" icon={false}>
       {warmingStatus || "Acordando a API (Render)"} Pode levar ~1 minuto no plano gratuito.
     </Alert>
     <LinearProgress sx={{ mt: 1 }} />
@@ -195,7 +194,7 @@ useEffect(() => {
 )}
 {apiError && !warming && (
   <Box sx={{ px: 4, pt: 2 }}>
-    <Alert severity=verity="warning" action={<Button onClick={() => { setApiReady(false); carregarDados(); }}>Tentar novamente</Button>}>
+    <Alert severity="warning" action={<Button onClick={() => { setApiReady(false); carregarDados(); }}>Tentar novamente</Button>}>
       {apiError}
     </Alert>
   </Box>
@@ -314,3 +313,4 @@ useEffect(() => {
 };
 
 export default App;
+
