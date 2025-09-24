@@ -284,7 +284,7 @@ const App: React.FC = () => {
         />
 
         {/* Área da Tabela/Gráfico (mantém altura enquanto carrega) */}
-        <Box sx={{ px: 4, pt: 2 }}>
+        <>
           {isLoadingData ? (
             // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
             <Paper
@@ -328,13 +328,8 @@ const App: React.FC = () => {
               mostrarPrincesa={mostrarPrincesa}
               mostrarPrinceso={mostrarPrinceso}
             />
-          ) : (
-            // VAZIO
-            <Alert severity="info" icon={false}>
-              Nenhuma ocorrência para os filtros atuais.
-            </Alert>
-          )}
-        </Box>
+          ) : null}
+        </>
         {/* Totais */}
         <TotaisBox
           mostrarPrincesa={mostrarPrincesa}
