@@ -20,6 +20,10 @@ import CapitulosSlider from "./components/mui/CapitulosSlider";
 import TabelaPalavras from "./components/recharts/TabelaPalavras";
 import TotaisBox from "./components/mui/TotaisBox";
 import TituloPrincipal from "./components/mui/TituloPrincipal";
+import StatusBar from "./components/mui/StatusBar";
+import './wakeApi';
+import './axiosRetry';
+import { useApiStatus } from "./hooks/useApiStatus";
 
 type CapituloData = {
   capitulo: number;
@@ -119,6 +123,8 @@ const App: React.FC = () => {
     });
     setTotais(total);
   };
+
+  const { loadingCount, apiStatus } = useApiStatus();
 
   const dadosFiltrados = dados
     .filter((item) => {
@@ -273,6 +279,7 @@ useEffect(() => {
         </Grid>
 
         {/* Tabela */}
+        <StatusBar loadingCount={loadingCount} apiStatus={apiStatus} />
         <TabelaPalavras
           dados={dadosFiltrados}
           mostrarPrincesa={mostrarPrincesa}

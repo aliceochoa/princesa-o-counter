@@ -1,0 +1,48 @@
+const BASE = (import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "");
+
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+
+function setStatus(msg: string | null) {
+  window.dispatchEvent(new CustomEvent("api:status", { detail: msg }));
+}
+
+async function pingOnce(url: string, timeoutMs = 6000): Promise<boolean> {
+  if (!url) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+export async function wakeApi(maxMs = 70000): Promise<boolean> {
+  if (!BASE) return false;
+  setStatus("Carregando a API…");
+  const candidates = [`${BASE}/health`, `${BASE}/capitulos`, `${BASE}/docs`];
+  const backoff = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
+  let elapsed = 0;
+  for (let i = 0; i < backoff.length && elapsed <= maxMs; i++) {
+    const wait = backoff[i];
+    if (wait) {
+      setStatus(`Carregando a API… tentativa ${i}/${backoff.length - 1}`);
+      await sleep(wait);
+      elapsed += wait;
+    }
+    for (const u of candidates) {
+      const ok = await pingOnce(u);
+      if (ok) {
+        setStatus(null);
+        return true;
+      }
+    }
+  }
+  setStatus("Não foi possível contatar a API agora :(");
+  return false;
+}
+
+wakeApi();
