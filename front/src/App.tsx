@@ -96,11 +96,15 @@ const App: React.FC = () => {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
 
-  const { loadingCount, apiStatus, hasSettledOnce } = useApiStatus();
+  
+  const [isFetching, setIsFetching] = useState(false);
+const { loadingCount, apiStatus, hasSettledOnce } = useApiStatus();
 
   const carregarDados = async () => {
     try {
-      setApiError(null);
+      
+      setIsFetching(true);
+setApiError(null);
       if (!apiReady) {
         setWarming(true);
         const ok = await wakeApiWithRetry((s) => setWarmingStatus(s));
@@ -141,7 +145,9 @@ const App: React.FC = () => {
     }
   
     finally {
-      try { setHasFetchedOnce(true); } catch {}
+            setIsFetching(false);
+    try { setHasFetchedOnce(true); } catch {}
+    
     }
 };
 
@@ -183,9 +189,9 @@ const App: React.FC = () => {
     });
 
   const TABLE_MIN_HEIGHT = 420; // ajuste se quiser
-  const isLoadingData = warming || loadingCount > 0 || !hasSettledOnce;
+  const isLoadingData = warming || isFetching;
   const hasData = Array.isArray(dadosFiltrados) && dadosFiltrados.length > 0;
-  const showSkeleton = isLoadingData || !hasSettledOnce;
+  const showSkeleton = isLoadingData;
   const showTable = !showSkeleton && !apiError && hasData;
   const showEmpty = !showSkeleton && !apiError && hasFetchedOnce && !hasData;
 
