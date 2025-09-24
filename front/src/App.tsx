@@ -12,6 +12,8 @@ import {
   Alert,
   LinearProgress,
   Button,
+  Paper,
+  Skeleton,
 } from "@mui/material";
 import PalavraSwitch from "./components/mui/PalavraSwitch";
 import OcorrenciasCheckbox from "./components/mui/OcorrenciasCheckbox";
@@ -36,7 +38,6 @@ const API_URL = `${(import.meta as any).env.VITE_API_URL?.replace(
   /\/+$/,
   ""
 )}/capitulos`;
-// --- Warm-up / Retry logic to "wake" Render free instance ---
 const API_BASE = (import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "");
 const PING_ENDPOINTS = [
   `${API_BASE}/health`,
@@ -76,7 +77,6 @@ async function wakeApiWithRetry(
   }
   return false;
 }
-// -------------------------------------------------------------
 
 const App: React.FC = () => {
   const [dados, setDados] = useState<CapituloData[]>([]);
@@ -176,6 +176,10 @@ const App: React.FC = () => {
       return a.capitulo - b.capitulo;
     });
 
+  const TABLE_MIN_HEIGHT = 420; // ajuste se quiser
+  const isLoadingData = warming || loadingCount > 0 || !apiReady;
+  const hasData = Array.isArray(dadosFiltrados) && dadosFiltrados.length > 0;
+
   useEffect(() => {
     (async () => {
       setWarming(true);
@@ -273,18 +277,35 @@ const App: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Tabela */}
-        <StatusBar loadingCount={loadingCount} apiStatus={apiStatus} />
-        {warming && (
-          <Box sx={{ px: 4, pt: 2 }}>
-            <Alert severity="info" icon={false}>
-              {warmingStatus || "Carregando os dados..."}
-            </Alert>
-            <LinearProgress sx={{ mt: 1 }} />
-          </Box>
-        )}
-        {apiError && !warming && (
-          <Box sx={{ px: 4, pt: 2 }}>
+        {/* Status Bar e Alerts (barra compacta; troque o texto se quiser) */}
+        <StatusBar
+          loadingCount={loadingCount}
+          apiStatus={apiStatus}
+        />
+
+        {/* Área da Tabela/Gráfico (mantém altura enquanto carrega) */}
+        <Box sx={{ px: 4, pt: 2 }}>
+          {isLoadingData ? (
+            // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, minHeight: TABLE_MIN_HEIGHT }}
+            >
+              <Alert severity="info" icon={false} sx={{ mb: 1 }}>
+                {warmingStatus ||
+                  "Carregando os dados… Pode levar alguns segundos enquanto a API inicia."}
+              </Alert>
+              <LinearProgress />
+
+              {/* esqueleto de linhas de tabela (visual) */}
+              <Box sx={{ mt: 2 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} height={28} sx={{ mb: 1 }} />
+                ))}
+              </Box>
+            </Paper>
+          ) : apiError ? (
+            // ERRO
             <Alert
               severity="warning"
               action={
@@ -300,13 +321,20 @@ const App: React.FC = () => {
             >
               {apiError}
             </Alert>
-          </Box>
-        )}
-        <TabelaPalavras
-          dados={dadosFiltrados}
-          mostrarPrincesa={mostrarPrincesa}
-          mostrarPrinceso={mostrarPrinceso}
-        />
+          ) : hasData ? (
+            // TABELA — só aparece quando terminou de carregar e sem erro
+            <TabelaPalavras
+              dados={dadosFiltrados}
+              mostrarPrincesa={mostrarPrincesa}
+              mostrarPrinceso={mostrarPrinceso}
+            />
+          ) : (
+            // VAZIO
+            <Alert severity="info" icon={false}>
+              Nenhuma ocorrência para os filtros atuais.
+            </Alert>
+          )}
+        </Box>
         {/* Totais */}
         <TotaisBox
           mostrarPrincesa={mostrarPrincesa}
