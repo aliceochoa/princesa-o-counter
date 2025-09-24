@@ -287,23 +287,12 @@ const App: React.FC = () => {
         <>
           {isLoadingData ? (
             // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
-            <Paper
-              variant="outlined"
-              sx={{ p: 2, minHeight: TABLE_MIN_HEIGHT }}
-            >
+              <>
+              // PLACEHOLDER enquanto carrega — mantém o espaço da tabela
               <Alert severity="info" icon={false} sx={{ mb: 1 }}>
                 {warmingStatus ||
                   "Carregando os dados… Pode levar alguns segundos enquanto a API inicia."}
-              </Alert>
-              <LinearProgress />
-
-              {/* esqueleto de linhas de tabela (visual) */}
-              <Box sx={{ mt: 2 }}>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} height={28} sx={{ mb: 1 }} />
-                ))}
-              </Box>
-            </Paper>
+              </Alert><LinearProgress /></>
           ) : apiError ? (
             // ERRO
             <Alert
