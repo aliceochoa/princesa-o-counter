@@ -1,0 +1,49 @@
+# =========================
+#   FRONTEND (React/TS)
+# =========================
+front/node_modules/
+front/build/
+front/dist/
+front/.next/
+front/.env
+front/.env.local
+front/.env.*.local
+
+# Logs
+front/npm-debug.log*
+front/yarn-debug.log*
+front/yarn-error.log*
+front/pnpm-debug.log*
+
+# Editor configs
+front/.vscode/
+front/.idea/
+front/*.swp
+
+# =========================
+#   BACKEND (FastAPI)
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+
+# Virtualenv
+api/venv/
+api/.venv/
+
+# Env files
+api/.env
+api/.env.local
+
+# =========================
+#   GLOBAL
+# =========================
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.swp
