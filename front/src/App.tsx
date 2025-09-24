@@ -9,6 +9,9 @@ import {
   Divider,
   Stack,
   Link,
+  Alert,
+  LinearProgress,
+  Button,
 } from "@mui/material";
 import PalavraSwitch from "./components/mui/PalavraSwitch";
 import OcorrenciasCheckbox from "./components/mui/OcorrenciasCheckbox";
@@ -26,6 +29,42 @@ type CapituloData = {
 };
 
 const API_URL = `${(import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "")}/capitulos`;
+// --- Warm-up / Retry logic to "wake" Render free instance ---
+const API_BASE = (import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "");
+const PING_ENDPOINTS = [`${API_BASE}/health`, `${API_BASE}/capitulos?min=1&max=1&ocultar=false`];
+
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+async function pingApiOnce(): Promise<boolean> {
+  for (const url of PING_ENDPOINTS) {
+    try {
+      const r = await fetch(url, { method: "GET" });
+      if (r.ok) return true; // 2xx
+    } catch (_) {
+      // ignore and try next
+    }
+  }
+  return false;
+}
+
+async function wakeApiWithRetry(setStatus: (s: string) => void, maxSeconds = 70): Promise<boolean> {
+  // Progressive backoff ~ 0s,1s,2s,4s,8s,12s,16s,20s,  capped
+  const steps = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
+  let elapsed = 0;
+  for (let i = 0; i < steps.length;eps.length && elapsed <= maxSeconds * 1000; i++) {
+    const wait = steps[i];
+    if (wait) {
+      setStatus(`Acordando a API (tentativa ${i}/${steps.length - 1})`);
+      await sleep(wait);
+      elapsed += wait;
+    }
+    const ok = await pingApiOnce();
+    if (ok) return true;
+  }
+  return false;
+}
+// -------------------------------------------------------------
+
 
 const App: React.FC = () => {
   const [dados, setDados] = useState<CapituloData[]>([]);
@@ -40,13 +79,29 @@ const App: React.FC = () => {
   });
 
   const carregarDados = async () => {
+    try {
+      setApiError(null);
+      if (!apiReady) {
+        setWarming(true);
+        const ok = await wakeApiWithRetry((s)=>setWarmingStatus(s));
+        setWarming(false);
+        if (!ok) {
+          setApiError("Não consegui conectar à API. Tente novamente.");
+          return;
+        }
+        setApiReady(true);
+      }
+
     const params: any = {
       min: intervalo[0],
       max: intervalo[1],
       ordenar: ordenar,
       ocultar: ocultarZeros,
       palavras: [],
-    };
+    } catch (err) {
+      setApiError("Erro ao buscar dados da API. Tente novamente.");
+    }
+  };
     if (mostrarPrincesa) params.palavras.push("princesa");
     if (mostrarPrinceso) params.palavras.push("princeso");
 
@@ -92,7 +147,7 @@ const App: React.FC = () => {
       const menor = princesa < princeso ? princesa : princeso;
 
       return {
-        ...item,
+        item,
         data: item.data,
         princesa,
         princeso,
@@ -103,10 +158,20 @@ const App: React.FC = () => {
       };
     })
     .sort((a, b) => {
-      if (ordenar === "crescente") return a.soma - b.soma;
-      if (ordenar === "decrescente") return b.soma - a.soma;
+      if (ordenar=== "crescente") return a.soma - b.soma;
+      if (ordenar=== "decrescente") return b.soma - a.soma;
       return a.capitulo - b.capitulo;
     });
+
+useEffect(() => {
+  (async () => {
+    setWarming(true);
+    const ok = await wakeApiWithRetry((s)=>setWarmingStatus(s));
+    setWarming(false);
+    setApiReady(ok);
+    if (!ok) setApiError("A API pode estar iniciando (Render). Clique em 'Tentar novamente' ou recarregue.");
+  })();
+}, []);
 
   useEffect(() => {
     carregarDados();
@@ -114,6 +179,21 @@ const App: React.FC = () => {
 
   return (
     <Container>
+{warming && (
+  <Box sx={{ px: 4, pt: 2 }}>
+    <Alert severity=verity="info" icon={false}>
+      {warmingStatus || "Acordando a API (Render)"} Pode levar ~1 minuto no plano gratuito.
+    </Alert>
+    <LinearProgress sx={{ mt: 1 }} />
+  </Box>
+)}
+{apiError && !warming && (
+  <Box sx={{ px: 4, pt: 2 }}>
+    <Alert severity=verity="warning" action={<Button onClick={() => { setApiReady(false); carregarDados(); }}>Tentar novamente</Button>}>
+      {apiError}
+    </Alert>
+  </Box>
+)}
       <Card
         variant="outlined"
         sx={{
