@@ -292,22 +292,14 @@ const App: React.FC = () => {
         {/* Área da Tabela/Gráfico (mantém altura enquanto carrega) */}
         <>
           {showSkeleton ? (
-            <Paper
-              variant="outlined"
-              sx={{ p: 2, minHeight: TABLE_MIN_HEIGHT }}
-            >
-              <Alert severity="info" icon={false} sx={{ mb: 1 }}>
-                {warmingStatus ||
-                  "Carregando os dados… Pode levar alguns segundos enquanto a API inicia."}
-              </Alert>
-              <LinearProgress />
-              <GraficoSkeleton
+              <><Alert severity="info" icon={false} sx={{ mb: 1 }}>
+              {warmingStatus ||
+                "Carregando os dados… Pode levar alguns segundos enquanto a API inicia."}
+            </Alert><LinearProgress /><GraficoSkeleton
                 height={TABLE_MIN_HEIGHT - 96}
                 barWidth={28}
                 gap={16}
-                bars={[20, 48, 72, 56, 88, 34, 60]}
-              />
-            </Paper>
+                bars={[20, 48, 72, 56, 88, 34, 60]} /></>
           ) : apiError ? (
             <Alert
               severity="warning"
