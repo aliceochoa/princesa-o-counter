@@ -25,7 +25,7 @@ type CapituloData = {
   data?: string;
 };
 
-const API_URL = "http://localhost:8000/capitulos";
+const API_URL = `${(import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "")}/capitulos`;
 
 const App: React.FC = () => {
   const [dados, setDados] = useState<CapituloData[]>([]);
