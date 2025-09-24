@@ -25,19 +25,6 @@ export default function GraficoSkeleton({
   return (
     <Box sx={{ height, px: 2, pb: 1 }}>
       {/* área do gráfico com "eixos" */}
-      <Box
-        sx={{
-          height: "100%",
-          borderLeft: "1px solid",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          pl: `${innerPadX}px`,
-          pb: `${innerPadY}px`,
-          display: "flex",
-          alignItems: "flex-end",
-          gap: `${gap}px`,
-        }}
-      >
         {bars.map((v, i) => {
           const h = Math.max(10, (usableHeight * Math.min(100, Math.max(0, v))) / 100);
           return (
@@ -48,7 +35,6 @@ export default function GraficoSkeleton({
             </Box>
           );
         })}
-      </Box>
     </Box>
   );
 }
