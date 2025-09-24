@@ -23,9 +23,8 @@ export default function GraficoSkeleton({
   const usableHeight = Math.max(60, height - innerPadY * 2 - 24); // 24 ~ espaço do rótulo do eixo
 
   return (
-    <Box sx={{ height, px: 2, pb: 1 }}>
-      {/* área do gráfico com "eixos" */}
       <Box
+        /* área do gráfico com "eixos" */
         sx={{
           height: "100%",
           borderLeft: "1px solid",
@@ -49,6 +48,5 @@ export default function GraficoSkeleton({
           );
         })}
       </Box>
-    </Box>
   );
 }
