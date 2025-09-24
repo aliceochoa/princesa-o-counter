@@ -93,6 +93,8 @@ const App: React.FC = () => {
   const [warmingStatus, setWarmingStatus] = useState<string | null>(null);
   const [apiReady, setApiReady] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+
 
   const { loadingCount, apiStatus, hasSettledOnce } = useApiStatus();
 
@@ -137,7 +139,11 @@ const App: React.FC = () => {
     } catch (err) {
       setApiError("Erro ao buscar dados da API. Tente novamente.");
     }
-  };
+  
+    finally {
+      try { setHasFetchedOnce(true); } catch {}
+    }
+};
 
   const dadosFiltrados = dados
     .filter((item) => {
@@ -177,11 +183,11 @@ const App: React.FC = () => {
     });
 
   const TABLE_MIN_HEIGHT = 420; // ajuste se quiser
-  const isLoadingData = warming || loadingCount > 0 || !apiReady;
+  const isLoadingData = warming || loadingCount > 0 || !hasSettledOnce;
   const hasData = Array.isArray(dadosFiltrados) && dadosFiltrados.length > 0;
   const showSkeleton = isLoadingData || !hasSettledOnce;
   const showTable = !showSkeleton && !apiError && hasData;
-  const showEmpty = !showSkeleton && !apiError && !hasData;
+  const showEmpty = !showSkeleton && !apiError && hasFetchedOnce && !hasData;
 
   useEffect(() => {
     (async () => {
