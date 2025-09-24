@@ -21,8 +21,8 @@ import TabelaPalavras from "./components/recharts/TabelaPalavras";
 import TotaisBox from "./components/mui/TotaisBox";
 import TituloPrincipal from "./components/mui/TituloPrincipal";
 import StatusBar from "./components/mui/StatusBar";
-import './wakeApi';
-import './axiosRetry';
+import "./wakeApi";
+import "./axiosRetry";
 import { useApiStatus } from "./hooks/useApiStatus";
 
 type CapituloData = {
@@ -32,12 +32,18 @@ type CapituloData = {
   data?: string;
 };
 
-const API_URL = `${(import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "")}/capitulos`;
+const API_URL = `${(import.meta as any).env.VITE_API_URL?.replace(
+  /\/+$/,
+  ""
+)}/capitulos`;
 // --- Warm-up / Retry logic to "wake" Render free instance ---
 const API_BASE = (import.meta as any).env.VITE_API_URL?.replace(/\/+$/, "");
-const PING_ENDPOINTS = [`${API_BASE}/health`, `${API_BASE}/capitulos?min=1&max=1&ocultar=false`];
+const PING_ENDPOINTS = [
+  `${API_BASE}/health`,
+  `${API_BASE}/capitulos?min=1&max=1&ocultar=false`,
+];
 
-const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 async function pingApiOnce(): Promise<boolean> {
   for (const url of PING_ENDPOINTS) {
@@ -51,7 +57,10 @@ async function pingApiOnce(): Promise<boolean> {
   return false;
 }
 
-async function wakeApiWithRetry(setStatus: (s: string) => void, maxSeconds = 70): Promise<boolean> {
+async function wakeApiWithRetry(
+  setStatus: (s: string) => void,
+  maxSeconds = 70
+): Promise<boolean> {
   // Progressive backoff ~ 0s,1s,2s,4s,8s,12s,16s,20s,  capped
   const steps = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
   let elapsed = 0;
@@ -69,7 +78,6 @@ async function wakeApiWithRetry(setStatus: (s: string) => void, maxSeconds = 70)
 }
 // -------------------------------------------------------------
 
-
 const App: React.FC = () => {
   const [dados, setDados] = useState<CapituloData[]>([]);
   const [intervalo, setIntervalo] = useState<[number, number]>([32, 173]);
@@ -85,7 +93,7 @@ const App: React.FC = () => {
   const [warmingStatus, setWarmingStatus] = useState<string | null>(null);
   const [apiReady, setApiReady] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  
+
   const { loadingCount, apiStatus } = useApiStatus();
 
   const carregarDados = async () => {
@@ -93,7 +101,7 @@ const App: React.FC = () => {
       setApiError(null);
       if (!apiReady) {
         setWarming(true);
-        const ok = await wakeApiWithRetry((s)=>setWarmingStatus(s));
+        const ok = await wakeApiWithRetry((s) => setWarmingStatus(s));
         setWarming(false);
         if (!ok) {
           setApiError("Não consegui conectar à API. Tente novamente.");
@@ -109,13 +117,13 @@ const App: React.FC = () => {
         ocultar: ocultarZeros,
         palavras: [],
       };
-  
+
       if (mostrarPrincesa) params.palavras.push("princesa");
       if (mostrarPrinceso) params.palavras.push("princeso");
-  
+
       const response = await axios.get(API_URL, { params });
       setDados(response.data);
-  
+
       // Calcular totais
       const total: { princesa: number; princeso: number } = {
         princesa: 0,
@@ -168,15 +176,18 @@ const App: React.FC = () => {
       return a.capitulo - b.capitulo;
     });
 
-useEffect(() => {
-  (async () => {
-    setWarming(true);
-    const ok = await wakeApiWithRetry((s)=>setWarmingStatus(s));
-    setWarming(false);
-    setApiReady(ok);
-    if (!ok) setApiError("A API pode estar iniciando (Render). Clique em 'Tentar novamente' ou recarregue.");
-  })();
-}, []);
+  useEffect(() => {
+    (async () => {
+      setWarming(true);
+      const ok = await wakeApiWithRetry((s) => setWarmingStatus(s));
+      setWarming(false);
+      setApiReady(ok);
+      if (!ok)
+        setApiError(
+          "A API pode estar iniciando (Render). Clique em 'Tentar novamente' ou recarregue."
+        );
+    })();
+  }, []);
 
   useEffect(() => {
     carregarDados();
@@ -184,21 +195,6 @@ useEffect(() => {
 
   return (
     <Container>
-{warming && (
-  <Box sx={{ px: 4, pt: 2 }}>
-    <Alert severity="info" icon={false}>
-      {warmingStatus || "Acordando a API (Render)"} Pode levar ~1 minuto no plano gratuito.
-    </Alert>
-    <LinearProgress sx={{ mt: 1 }} />
-  </Box>
-)}
-{apiError && !warming && (
-  <Box sx={{ px: 4, pt: 2 }}>
-    <Alert severity="warning" action={<Button onClick={() => { setApiReady(false); carregarDados(); }}>Tentar novamente</Button>}>
-      {apiError}
-    </Alert>
-  </Box>
-)}
       <Card
         variant="outlined"
         sx={{
@@ -279,6 +275,33 @@ useEffect(() => {
 
         {/* Tabela */}
         <StatusBar loadingCount={loadingCount} apiStatus={apiStatus} />
+        {warming && (
+          <Box sx={{ px: 4, pt: 2 }}>
+            <Alert severity="info" icon={false}>
+              {warmingStatus || "Carregando os dados..."}
+            </Alert>
+            <LinearProgress sx={{ mt: 1 }} />
+          </Box>
+        )}
+        {apiError && !warming && (
+          <Box sx={{ px: 4, pt: 2 }}>
+            <Alert
+              severity="warning"
+              action={
+                <Button
+                  onClick={() => {
+                    setApiReady(false);
+                    carregarDados();
+                  }}
+                >
+                  Tentar novamente
+                </Button>
+              }
+            >
+              {apiError}
+            </Alert>
+          </Box>
+        )}
         <TabelaPalavras
           dados={dadosFiltrados}
           mostrarPrincesa={mostrarPrincesa}
@@ -294,17 +317,18 @@ useEffect(() => {
         {/* Copyright */}
         <Box textAlign="center">
           <Typography variant="body2" color="text.secondary">
-    por{' '}
-    <Link
-      href="https://github.com/aliceochoa"
-      target="_blank"
-      rel="noopener noreferrer"
-      underline="hover"
-      color="inherit"
-      fontWeight="bold"
-    >
-      Alice Ochoa
-    </Link>{' '} | agosto de 2025
+            por{" "}
+            <Link
+              href="https://github.com/aliceochoa"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="hover"
+              color="inherit"
+              fontWeight="bold"
+            >
+              Alice Ochoa
+            </Link>{" "}
+            | agosto de 2025
           </Typography>
         </Box>
       </Card>
@@ -313,4 +337,3 @@ useEffect(() => {
 };
 
 export default App;
-
