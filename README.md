@@ -31,6 +31,9 @@ npm run dev
 ## 🌐 Deploy
 
 ### API (Render)
+
+> **Importante:** no Render, configure **Root Directory** como `./api` (com `./` no início).  
+
 1. Crie um Web Service no Render apontando para a pasta `api/` do repositório.
 2. **Build**: `pip install -r requirements.txt`
 3. **Start**: `uvicorn api_fastapi:app --host 0.0.0.0 --port 10000`
