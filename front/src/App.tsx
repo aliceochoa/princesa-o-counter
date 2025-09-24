@@ -305,7 +305,7 @@ setApiError(null);
                 height={TABLE_MIN_HEIGHT - 96}
                 barWidth={28}
                 gap={16}
-                bars={[20, 48, 72, 56, 88, 34, 60]} /></>
+                 /></>
           ) : apiError ? (
             <Alert
               severity="warning"
